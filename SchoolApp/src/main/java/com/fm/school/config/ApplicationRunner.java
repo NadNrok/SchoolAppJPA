@@ -1,26 +1,23 @@
 package com.fm.school.config;
 
+import com.fm.school.model.Course;
+import com.fm.school.model.Group;
+import com.fm.school.model.Student;
+import com.fm.school.model.StudentCourse;
+import com.fm.school.repository.CourseRepository;
+import com.fm.school.repository.GroupRepository;
+import com.fm.school.repository.StudentCourseRepository;
+import com.fm.school.repository.StudentRepository;
+import jakarta.annotation.PostConstruct;
 import org.flywaydb.core.Flyway;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
-import com.fm.school.service.ApplicationRunnerService;
-
-import jakarta.annotation.PostConstruct;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import javax.sql.DataSource;
+import java.util.*;
 
 @Component
-public class DatabaseInitializer {
-
-	private final JdbcTemplate jdbcTemplate;
-	private final ApplicationRunnerService applicationRunnerService;
+public class ApplicationRunner {
 
 	private static final String[] FIRST_NAMES = { "John", "Alice", "Bob", "Emma", "Michael", "Olivia", "William",
 			"Sophia", "James", "Charlotte", "Daniel", "Emily", "Jacob", "Mia", "Alexander", "Abigail", "David", "Ella",
@@ -33,11 +30,22 @@ public class DatabaseInitializer {
 
 	private static final Random random = new Random();
 
-	@Autowired
-	public DatabaseInitializer(JdbcTemplate jdbcTemplate, ApplicationRunnerService applicationRunnerService) {
-		this.jdbcTemplate = jdbcTemplate;
-		this.applicationRunnerService = applicationRunnerService;
+	private final CourseRepository courseRepository;
+	private final GroupRepository groupRepository;
+	private final StudentCourseRepository studentCourseRepository;
+	private final StudentRepository studentRepository;
+
+	@Qualifier("myDataSource")
+	private final DataSource dataSource;
+
+	public ApplicationRunner(CourseRepository courseRepository, GroupRepository groupRepository, StudentCourseRepository studentCourseRepository, StudentRepository studentRepository, DataSource dataSource) {
+		this.courseRepository = courseRepository;
+		this.groupRepository = groupRepository;
+		this.studentCourseRepository = studentCourseRepository;
+		this.studentRepository = studentRepository;
+		this.dataSource = dataSource;
 	}
+
 
 	@PostConstruct
 	private void migrateAndGenerateData() {
@@ -46,15 +54,26 @@ public class DatabaseInitializer {
 	}
 
 	private void migrateDatabase() {
-		Flyway flyway = Flyway.configure().dataSource(jdbcTemplate.getDataSource()).load();
+		Flyway flyway = Flyway.configure().dataSource(dataSource).load();
 		flyway.migrate();
 	}
 
 	private void generateTestDataIfNeeded() {
-		if (!applicationRunnerService.databaseHasData()) {
+		if (!databaseHasData()) {
 			generateTestData();
 		}
 	}
+
+	private boolean databaseHasData() {
+	    Long totalStudents = studentRepository.getCount();
+	    Long totalCourses = courseRepository.getCount();
+	    Long totalGroups = groupRepository.getCount();
+	    Long totalStudentCourses = studentCourseRepository.getCount();
+
+	    long totalCount = totalStudents + totalCourses + totalGroups + totalStudentCourses;
+	    return totalCount > 0;
+	}
+
 
 	private void generateTestData() {
 		insertCourses();
@@ -64,21 +83,19 @@ public class DatabaseInitializer {
 	}
 
 	private void insertCourses() {
-		String insertCourseQuery = "INSERT INTO courses (course_name) VALUES (?)";
 		for (String courseName : COURSES) {
-			jdbcTemplate.update(insertCourseQuery, courseName);
+			courseRepository.save(new Course(courseName));
 		}
 	}
 
 	private void generateAndInsertGroups() {
-		String insertGroupQuery = "INSERT INTO groups (group_name) VALUES (?)";
 		Set<String> groupSet = new HashSet<>();
 
 		while (groupSet.size() < 10) {
 			String groupName = generateRandomGroupName();
 			if (!groupSet.contains(groupName)) {
 				groupSet.add(groupName);
-				jdbcTemplate.update(insertGroupQuery, groupName);
+				groupRepository.save(new Group(groupName));
 			}
 		}
 	}
@@ -93,16 +110,13 @@ public class DatabaseInitializer {
 	}
 
 	private String generateRandomGroupName() {
-		StringBuilder groupName = new StringBuilder();
-		groupName.append((char) (random.nextInt(26) + 'A'));
-		groupName.append((char) (random.nextInt(26) + 'A'));
-		groupName.append("-");
-		groupName.append(random.nextInt(100));
-		return groupName.toString();
+        return String.valueOf((char) (random.nextInt(26) + 'A')) +
+				(char) (random.nextInt(26) + 'A') +
+				"-" +
+				random.nextInt(100);
 	}
 
 	private void generateAndInsertStudents() {
-		String insertStudentQuery = "INSERT INTO students (first_name, last_name, group_id) VALUES (?, ?, ?)";
 		Set<String> studentSet = new HashSet<>();
 
 		List<Integer> groupIds = getRandomGroupIds(10);
@@ -118,15 +132,14 @@ public class DatabaseInitializer {
 
 				if (!studentSet.contains(fullName)) {
 					studentSet.add(fullName);
-					jdbcTemplate.update(insertStudentQuery, firstName, lastName, groupId);
+					Optional<Group> groupByGroupId = groupRepository.findById(groupId);
+					studentRepository.save(new Student(groupByGroupId.get(), firstName, lastName));
 				}
 			}
 		}
 	}
 
 	private void generateAndInsertStudentCourses() {
-		String insertStudentCourseQuery = "INSERT INTO student_courses (student_id, course_id) VALUES (?, ?)";
-
 		List<Integer> studentIds = getStudentIds();
 		List<Integer> courseIds = getCourseIds();
 
@@ -134,26 +147,25 @@ public class DatabaseInitializer {
 			for (Integer courseId : courseIds) {
 				boolean studentCourseExists = checkIfStudentCourseExists(studentId, courseId);
 				if (!studentCourseExists) {
-					jdbcTemplate.update(insertStudentCourseQuery, studentId, courseId);
+					studentCourseRepository.save(new StudentCourse(studentId, courseId));
 				}
 			}
 		}
 	}
 
 	private boolean checkIfStudentCourseExists(Integer studentId, Integer courseId) {
-		String query = "SELECT COUNT(*) FROM student_courses WHERE student_id = ? AND course_id = ?";
-		Integer count = jdbcTemplate.queryForObject(query, Integer.class, studentId, courseId);
+		Optional<Student> student = studentRepository.findById(studentId);
+		Optional<Course> course = courseRepository.findById(courseId);
+		Integer count = studentCourseRepository.checkIfStudentCourseExists(student.get(), course.get());
 		return count != null && count > 0;
 	}
 
 	private List<Integer> getStudentIds() {
-		String query = "SELECT student_id FROM students";
-		return jdbcTemplate.queryForList(query, Integer.class);
+		return studentRepository.getStudentIds();
 	}
 
 	private List<Integer> getCourseIds() {
-		String query = "SELECT course_id FROM courses";
-		return jdbcTemplate.queryForList(query, Integer.class);
+		return courseRepository.getCourseIds();
 	}
 
 }

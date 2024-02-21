@@ -1,12 +1,5 @@
 package com.fm.school.controller;
 
-import java.util.List;
-import java.util.Scanner;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.DependsOn;
-import org.springframework.stereotype.Component;
-
 import com.fm.school.model.Course;
 import com.fm.school.model.Group;
 import com.fm.school.model.Student;
@@ -16,251 +9,264 @@ import com.fm.school.service.GroupService;
 import com.fm.school.service.StudentCourseService;
 import com.fm.school.service.StudentService;
 import com.fm.school.util.ScannerUtil;
-
 import jakarta.annotation.PostConstruct;
+import org.springframework.context.annotation.DependsOn;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import java.util.List;
+import java.util.Scanner;
 
 @Component
-@DependsOn("databaseInitializer")
+@DependsOn("applicationRunner")
 public class Controller {
 
-	@Autowired
-	private GroupService groupService;
-	@Autowired
-	private StudentService studentService;
-	@Autowired
-	private CourseService courseService;
-	@Autowired
-	private StudentCourseService studentCourseService;
+    private final GroupService groupService;
+    private final StudentService studentService;
+    private final CourseService courseService;
+    private final StudentCourseService studentCourseService;
 
-	@PostConstruct
-	public void start() {
-		Scanner scanner = new Scanner(System.in);
-		int choice;
+    public Controller(GroupService groupService, StudentService studentService, CourseService courseService, StudentCourseService studentCourseService) {
+        this.groupService = groupService;
+        this.studentService = studentService;
+        this.courseService = courseService;
+        this.studentCourseService = studentCourseService;
+    }
 
-		do {
-			printMenu();
-			choice = ScannerUtil.getIntInput("Enter your choice: ");
+    @PostConstruct
+    public void start() {
+        Scanner scanner = new Scanner(System.in);
+        int choice;
 
-			switch (choice) {
-			case 1:
-				findAllGroupsWithLessOrEqualStudents(scanner);
-				break;
-			case 2:
-				findAllStudentsByCourseName(scanner);
-				break;
-			case 3:
-				addNewStudent(scanner);
-				break;
-			case 4:
-				deleteStudentById(scanner);
-				break;
-			case 5:
-				addStudentToCourse(scanner);
-				break;
-			case 6:
-				removeStudentFromCourse(scanner);
-				break;
-			case 0:
-				System.out.println("Exiting the program.");
-				System.exit(0);
-			default:
-				System.out.println("Invalid choice. Please enter a valid option.");
-			}
-			System.out.println();
-		} while (choice != 0);
+        do {
+            printMenu();
+            choice = ScannerUtil.getIntInput(scanner, "Enter your choice: ");
 
-		scanner.close();
-	}
+            switch (choice) {
+                case 1:
+                    getGroupsWithLessOrEqualStudents(scanner);
+                    break;
+                case 2:
+                    displayStudentsByCourseName(scanner);
+                    break;
+                case 3:
+                    addStudent(scanner);
+                    break;
+                case 4:
+                    deleteStudentById(scanner);
+                    break;
+                case 5:
+                    addStudentToCourse(scanner);
+                    break;
+                case 6:
+                    removeStudentFromCourse(scanner);
+                    break;
+                case 0:
+                    System.out.println("Exiting the program.");
+                    System.exit(0);
+                default:
+                    System.out.println("Invalid choice. Please enter a valid option.");
+            }
+            System.out.println();
+        } while (choice != 0);
 
-	private void printMenu() {
-		System.out.println("-----------------------------------------------------------------");
-		System.out.println("1. Find all groups with less or equal students’ number");
-		System.out.println("2. Find all students related to the course with the given name");
-		System.out.println("3. Add a new student");
-		System.out.println("4. Delete a student by the STUDENT_ID");
-		System.out.println("5. Add a student to the course (from a list)");
-		System.out.println("6. Remove the student from one of their courses");
-		System.out.println("0. Exit");
-		System.out.println("-----------------------------------------------------------------");
+        scanner.close();
+    }
 
-	}
+    private void printMenu() {
+        System.out.println("-----------------------------------------------------------------");
+        System.out.println("1. Find all groups with less or equal students’ number");
+        System.out.println("2. Find all students related to the course with the given name");
+        System.out.println("3. Add a new student");
+        System.out.println("4. Delete a student by the Student_ID");
+        System.out.println("5. Add a student to the course");
+        System.out.println("6. Remove the student from one of their courses");
+        System.out.println("0. Exit");
+        System.out.println("-----------------------------------------------------------------");
+    }
 
-	void findAllGroupsWithLessOrEqualStudents(Scanner scanner) {
-		int numberOfStudents = ScannerUtil.getIntInput("Enter the number of students: ");
-		List<Group> groups = groupService.findAllGroupsWithLessOrEqualStudents(numberOfStudents);
+    @GetMapping("/groups")
+    public void getGroupsWithLessOrEqualStudents(Scanner scanner) {
+        int maxStudents = ScannerUtil.getIntInput(scanner, "Enter the maximum number of students: ");
+        List<Group> groups = groupService.findGroupsWithLessOrEqualStudents(maxStudents);
+        for (Group group : groups) {
+            System.out.println("Group: " + group.getGroupName());
+        }
+    }
 
-		System.out.println("Groups with less or equal students’ number:");
-		for (Group group : groups) {
-			System.out.println("Group ID: " + group.getGroupId() + ", Group Name: " + group.getGroupName());
-		}
-	}
+    @GetMapping("/courses")
+    public void displayAllCourses() {
+        List<Course> courses = courseService.getAllCourses();
+        System.out.println("List of courses:");
+        for (Course course : courses) {
+            System.out.println(course.getCourseName());
+        }
+    }
 
-	void findAllStudentsByCourseName(Scanner scanner) {
-		List<Course> courses = courseService.getAllCourses();
-		System.out.println("Available courses:");
-		for (int i = 0; i < courses.size(); i++) {
-			System.out.println((i + 1) + ". " + courses.get(i).getCourseName());
-		}
+    @GetMapping("/studentsByCourse")
+    public void displayStudentsByCourseName(Scanner scanner) {
+        List<Course> courses = courseService.getAllCourses();
 
-		String input = ScannerUtil.getStringInput("Enter the course name: ");
+        System.out.println("Available courses:");
+        for (int i = 0; i < courses.size(); i++) {
+            System.out.println((i + 1) + ". " + courses.get(i).getCourseName());
+        }
 
-		List<Student> students = studentService.getStudentsByCourseName(input);
-		if (students.isEmpty()) {
-			System.out.println("No students found for the course '" + input + "'.");
-		} else {
-			System.out.println("Students related to the course '" + input + "':");
-			for (Student student : students) {
-				System.out.println("Name: " + student.getFirstName() + " " + student.getLastName());
-			}
-		}
-	}
+        int courseChoice = ScannerUtil.getIntInput(scanner, "Enter the number of the course: ");
 
-	void addNewStudent(Scanner scanner) {
-		String firstName = ScannerUtil.getStringInput("Enter student's first name: ");
-		String lastName = ScannerUtil.getStringInput("Enter student's last name: ");
+        if (courseChoice >= 1 && courseChoice <= courses.size()) {
+            String courseName = courses.get(courseChoice - 1).getCourseName();
 
-		List<Group> groups = groupService.getAllGroups();
-		System.out.println("Available groups:");
-		int index = 1;
-		for (Group group : groups) {
-			System.out.println(index + ". " + group.getGroupName());
-			index++;
-		}
+            List<Student> students = studentCourseService.findStudentsByCourseName(courseName);
 
-		if (groups.isEmpty()) {
-			System.out.println("There are no available groups to assign the student to.");
-			return;
-		}
+            if (students.isEmpty()) {
+                System.out.println("No students found for the course \"" + courseName + "\".");
+            } else {
+                System.out.println("Students enrolled in the course \"" + courseName + "\":");
+                for (Student student : students) {
+                    System.out.println(student.getFirstName() + " " + student.getLastName());
+                }
+            }
+        } else {
+            System.out.println("Invalid course number. Please enter a valid option.");
+        }
+    }
 
-		int groupIndex = 0;
-		while (true) {
-			try {
-				groupIndex = Integer
-						.parseInt(ScannerUtil.getStringInput("Enter the number of the group to assign the student: "));
-				if (groupIndex < 1 || groupIndex > groups.size()) {
-					System.out.println(
-							"Invalid group number. Please enter a number between 1 and " + groups.size() + ".");
-				} else {
-					break;
-				}
-			} catch (NumberFormatException e) {
-				System.out.println("Invalid input. Please enter a valid integer.");
-			}
-		}
+    @PostMapping("/addStudent")
+    public void addStudent(Scanner scanner) {
+        System.out.println("Enter the first name of the student: ");
+        String firstName = scanner.nextLine();
 
-		Group selectedGroup = groups.get(groupIndex - 1);
+        System.out.println("Enter the last name of the student: ");
+        String lastName = scanner.nextLine();
 
-		Student newStudent = new Student();
-		newStudent.setFirstName(firstName);
-		newStudent.setLastName(lastName);
-		newStudent.setGroupId(selectedGroup.getGroupId());
+        List<Group> groups = groupService.getAllGroups();
+        System.out.println("Available groups:");
+        for (int i = 0; i < groups.size(); i++) {
+            System.out.println((i + 1) + ". " + groups.get(i).getGroupName());
+        }
 
-		studentService.addStudent(newStudent);
+        int groupChoice = ScannerUtil.getIntInput(scanner, "Enter the number of the group: ");
+        if (groupChoice >= 1 && groupChoice <= groups.size()) {
+            Group selectedGroup = groups.get(groupChoice - 1);
+            Student newStudent = new Student();
+            newStudent.setFirstName(firstName);
+            newStudent.setLastName(lastName);
+            newStudent.setGroup(selectedGroup);
+            studentService.saveStudent(newStudent);
+            System.out.println("Student \"" + firstName + " " + lastName + "\" added successfully to group \""
+                    + selectedGroup.getGroupName() + "\".");
+        } else {
+            System.out.println("Invalid group number. Please enter a valid option.");
+        }
+    }
 
-		System.out.println("Student added successfully!");
-	}
+    @PostMapping("/deleteStudent")
+    public void deleteStudentById(Scanner scanner) {
+        List<Student> students = studentService.getAllStudents();
+        System.out.println("Available students:");
+        for (Student student : students) {
+            System.out.println(student.getStudentId() + ". " + student.getFirstName() + " " + student.getLastName());
+        }
 
-	void deleteStudentById(Scanner scanner) {
-		List<Student> students = studentService.getAllStudents();
+        int studentId = ScannerUtil.getIntInput(scanner, "Enter the ID of the student to delete: ");
+        Student student = studentService.getStudentById(studentId);
+        if (student != null) {
+            studentService.deleteStudent(student);
+            System.out.println("Student with ID " + studentId + " has been deleted successfully.");
+        } else {
+            System.out.println("Student with ID " + studentId + " not found.");
+        }
+    }
 
-		System.out.println("Available students:");
-		for (Student student : students) {
-			System.out.println("ID: " + student.getStudentId() + ", Name: " + student.getFirstName() + " "
-					+ student.getLastName());
-		}
+    @PostMapping("/addStudentToCourse")
+    public void addStudentToCourse(Scanner scanner) {
 
-		int studentId = ScannerUtil.getIntInput("Enter the student ID to delete: ");
+        List<Student> students = studentService.getAllStudents();
+        System.out.println("Available students:");
+        for (Student student : students) {
+            System.out.println(student.getStudentId() + ". " + student.getFirstName() + " " + student.getLastName());
+        }
 
-		studentService.deleteStudentById(studentId);
+        int studentId = ScannerUtil.getIntInput(scanner, "Enter the ID of the student: ");
+        Student student = studentService.getStudentById(studentId);
+        if (student == null) {
+            System.out.println("Student with ID " + studentId + " not found.");
+            return;
+        }
 
-		System.out.println("Student with ID " + studentId + " has been deleted.");
-	}
+        List<Course> courses = courseService.getAllCourses();
+        System.out.println("Available courses:");
+        for (Course course : courses) {
+            System.out.println(course.getCourseId() + ". " + course.getCourseName());
+        }
 
-	void addStudentToCourse(Scanner scanner) {
-		List<Student> students = studentService.getAllStudents();
-		System.out.println("Available students:");
-		for (int i = 0; i < students.size(); i++) {
-			Student student = students.get(i);
-			System.out.println((i + 1) + ". " + student.getFirstName() + " " + student.getLastName() + " (Student ID: "
-					+ student.getStudentId() + ")");
-		}
+        int courseId = ScannerUtil.getIntInput(scanner, "Enter the ID of the course: ");
+        Course course = courseService.getCourseById(courseId);
+        if (course == null) {
+            System.out.println("Course with ID " + courseId + " not found.");
+            return;
+        }
 
-		int studentIndex = ScannerUtil.getIntInput("Enter the number of the student to add to the course: ");
-		if (studentIndex < 1 || studentIndex > students.size()) {
-			System.out.println("Invalid student number. Please enter a number between 1 and " + students.size() + ".");
-			return;
-		}
-		Student selectedStudent = students.get(studentIndex - 1);
+        List<StudentCourse> studentCourses = student.getCourses();
+        for (StudentCourse sc : studentCourses) {
+            if (sc.getCourse().getCourseId() == courseId) {
+                System.out.println("Student " + student.getFirstName() + " " + student.getLastName()
+                        + " is already enrolled in the course " + course.getCourseName());
+                return;
+            }
+        }
 
-		List<Course> courses = courseService.getAllCourses();
-		System.out.println("Available courses:");
-		for (int i = 0; i < courses.size(); i++) {
-			Course course = courses.get(i);
-			System.out.println((i + 1) + ". " + course.getCourseName());
-		}
+        StudentCourse newStudentCourse = new StudentCourse();
+        newStudentCourse.setStudent(student);
+        newStudentCourse.setCourse(course);
+        studentCourseService.saveStudentCourse(newStudentCourse);
 
-		int courseIndex = ScannerUtil.getIntInput("Enter the number of the course to add the student to: ");
-		if (courseIndex < 1 || courseIndex > courses.size()) {
-			System.out.println("Invalid course number. Please enter a number between 1 and " + courses.size() + ".");
-			return;
-		}
-		Course selectedCourse = courses.get(courseIndex - 1);
+        System.out.println("Student " + student.getFirstName() + " " + student.getLastName()
+                + " has been added to the course " + course.getCourseName() + " successfully.");
+    }
 
-		if (studentCourseService.isStudentEnrolledInCourse(selectedStudent.getStudentId(),
-				selectedCourse.getCourseId())) {
-			System.out.println("Student is already enrolled in the selected course.");
-			return;
-		}
+    @DeleteMapping("/removeStudentFromCourse")
+    public void removeStudentFromCourse(Scanner scanner) {
+        List<Student> students = studentService.getAllStudents();
+        System.out.println("Available students:");
+        for (Student student : students) {
+            System.out.println(student.getStudentId() + ". " + student.getFirstName() + " " + student.getLastName());
+        }
 
-		StudentCourse studentCourse = new StudentCourse();
-		studentCourse.setStudentId(selectedStudent.getStudentId());
-		studentCourse.setCourseId(selectedCourse.getCourseId());
-		studentCourseService.addStudentCourse(studentCourse);
+        int studentId = ScannerUtil.getIntInput(scanner, "Enter the ID of the student: ");
+        Student student = studentService.getStudentById(studentId);
+        if (student == null) {
+            System.out.println("Student with ID " + studentId + " not found.");
+            return;
+        }
 
-		System.out.println("Student added to the course successfully!");
-	}
+        List<StudentCourse> studentCourses = student.getCourses();
+        if (studentCourses.isEmpty()) {
+            System.out.println("Student " + student.getFirstName() + " " + student.getLastName()
+                    + " is not enrolled in any courses.");
+            return;
+        }
 
-	void removeStudentFromCourse(Scanner scanner) {
-		List<Student> students = studentService.getAllStudents();
-		System.out.println("Available students:");
-		for (int i = 0; i < students.size(); i++) {
-			Student student = students.get(i);
-			System.out.println((i + 1) + ". " + student.getFirstName() + " " + student.getLastName() + " (Student ID: "
-					+ student.getStudentId() + ")");
-		}
+        System.out.println("Courses enrolled by student " + student.getFirstName() + " " + student.getLastName() + ":");
+        for (int i = 0; i < studentCourses.size(); i++) {
+            Course course = studentCourses.get(i).getCourse();
+            System.out.println((i + 1) + ". " + course.getCourseName());
+        }
 
-		int studentIndex = ScannerUtil.getIntInput("Enter the number of the student to remove from a course: ");
-		if (studentIndex < 1 || studentIndex > students.size()) {
-			System.out.println("Invalid student number. Please enter a number between 1 and " + students.size() + ".");
-			return;
-		}
-		Student selectedStudent = students.get(studentIndex - 1);
+        int courseChoice = ScannerUtil.getIntInput(scanner, "Enter the number of the course to remove: ");
+        if (courseChoice >= 1 && courseChoice <= studentCourses.size()) {
+            StudentCourse studentCourseToRemove = studentCourses.get(courseChoice - 1);
+            Course courseToRemove = studentCourseToRemove.getCourse();
 
-		List<StudentCourse> studentCourses = studentCourseService
-				.getStudentCoursesByStudentId(selectedStudent.getStudentId());
-		if (studentCourses.isEmpty()) {
-			System.out.println("The selected student is not enrolled in any courses.");
-			return;
-		}
-
-		System.out.println("Courses enrolled by the selected student:");
-		for (int i = 0; i < studentCourses.size(); i++) {
-			StudentCourse studentCourse = studentCourses.get(i);
-			Course course = courseService.getCourseById(studentCourse.getCourseId());
-			System.out.println((i + 1) + ". " + course.getCourseName());
-		}
-
-		int courseIndex = ScannerUtil.getIntInput("Enter the number of the course to remove the student from: ");
-		if (courseIndex < 1 || courseIndex > studentCourses.size()) {
-			System.out.println(
-					"Invalid course number. Please enter a number between 1 and " + studentCourses.size() + ".");
-			return;
-		}
-		StudentCourse selectedStudentCourse = studentCourses.get(courseIndex - 1);
-
-		studentCourseService.deleteStudentCourse(selectedStudentCourse.getStudentId(),
-				selectedStudentCourse.getCourseId());
-		System.out.println("Student removed from the course successfully!");
-	}
+            studentCourseService.deleteStudentCourse(studentCourseToRemove);
+            System.out.println("Student " + student.getFirstName() + " " + student.getLastName()
+                    + " has been removed from the course " + courseToRemove.getCourseName() + " successfully.");
+        } else {
+            System.out.println("Invalid course number. Please enter a valid option.");
+        }
+    }
 
 }

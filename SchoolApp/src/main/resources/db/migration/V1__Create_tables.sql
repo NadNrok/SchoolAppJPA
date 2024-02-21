@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS courses (
 );
 
 CREATE TABLE IF NOT EXISTS student_courses (
+	id SERIAL PRIMARY KEY,
     student_id INT REFERENCES students(student_id) NOT NULL,
-    course_id INT REFERENCES courses(course_id) NOT NULL,
-    PRIMARY KEY (student_id, course_id)
+    course_id INT REFERENCES courses(course_id) NOT NULL
 );

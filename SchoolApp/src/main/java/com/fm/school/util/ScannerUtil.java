@@ -7,7 +7,7 @@ public class ScannerUtil {
 
     private static final Scanner scanner = new Scanner(System.in);
 
-    public static int getIntInput(String prompt) {
+    public static int getIntInput(Scanner scanner, String prompt) {
         int input;
         while (true) {
             System.out.print(prompt);

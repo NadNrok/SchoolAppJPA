@@ -1,19 +1,29 @@
 package com.fm.school.service;
 
 import com.fm.school.model.Group;
+import com.fm.school.repository.GroupRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-public interface GroupService {
-	List<Group> getAllGroups();
+@Service
+public class GroupService {
 
-	Group getGroupById(int groupId);
+    private final GroupRepository groupRepository;
 
-	void addGroup(Group group);
+    public GroupService(GroupRepository groupRepository) {
+        this.groupRepository = groupRepository;
+    }
 
-	void updateGroup(Group group);
+    public List<Group> findGroupsWithLessOrEqualStudents(int maxStudents) {
+        return groupRepository.findGroupsWithLessOrEqualStudents(maxStudents);
+    }
 
-	void deleteGroup(int groupId);
+    public Group findGroupByName(String groupName) {
+        return groupRepository.findGroupByGroupName(groupName);
+    }
 
-	List<Group> findAllGroupsWithLessOrEqualStudents(int numberOfStudents);
+    public List<Group> getAllGroups() {
+        return groupRepository.findAll();
+    }
 }

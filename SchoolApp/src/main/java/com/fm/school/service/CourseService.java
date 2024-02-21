@@ -1,19 +1,30 @@
 package com.fm.school.service;
 
 import com.fm.school.model.Course;
+import com.fm.school.repository.CourseRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
-public interface CourseService {
-	List<Course> getAllCourses();
+@Service
+public class CourseService {
+    private final CourseRepository courseRepository;
 
-	Course getCourseById(int courseId);
+    public CourseService(CourseRepository courseRepository) {
+        this.courseRepository = courseRepository;
+    }
 
-	void addCourse(Course course);
+    public List<Course> getAllCourses() {
+        return courseRepository.findAll();
+    }
 
-	void updateCourse(Course course);
+    public Course getCourseById(int courseId) {
+        Optional<Course> optionalCourse = courseRepository.findById(courseId);
+        return optionalCourse.orElse(null);
+    }
 
-	void deleteCourse(int courseId);
-
-	Course getCourseByName(String courseName);
+    public void saveCourse(Course course) {
+        courseRepository.save(course);
+    }
 }

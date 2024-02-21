@@ -1,7 +1,9 @@
 package com.fm.school.service;
 
-import com.fm.school.dao.CourseDAO;
+import com.fm.school.dao.CourseRepository;
 import com.fm.school.model.Course;
+import com.fm.school.service.impl.CourseServiceImpl;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,10 +19,10 @@ import static org.mockito.Mockito.*;
 public class CourseServiceImplTest {
 
 	@Mock
-	private CourseDAO courseDAO;
+	private CourseRepository courseDAO;
 
 	@InjectMocks
-	private CourseServiceImpl courseService;
+	private CourseService courseService;
 
 	@SuppressWarnings("deprecation")
 	@BeforeEach

@@ -73,15 +73,20 @@ public class ControllerTest {
 
 	@Test
 	public void testAddNewStudent() {
-		Scanner scanner = mock(Scanner.class);
-		when(groupService.getAllGroups()).thenReturn(new ArrayList<>());
-		when(ScannerUtil.getStringInput(anyString())).thenReturn("John", "Doe");
-		when(ScannerUtil.getIntInput("Enter the number of the group to assign the student: ")).thenReturn(1);
+	    Scanner scanner = mock(Scanner.class);
+	    
+	    when(groupService.getAllGroups()).thenReturn(new ArrayList<>());
+	    when(ScannerUtil.getStringInput(anyString())).thenReturn("John", "Doe");
+	    when(ScannerUtil.getIntInput("Enter the number of the group to assign the student: ")).thenReturn(1);
 
-		controller.addNewStudent(scanner);
+	    controller.addNewStudent(scanner);
 
-		verify(studentService, times(1)).addStudent(new Student(0, 1, "John", "Doe"));
+	    verify(studentService, times(1)).addStudent(argThat(student ->
+	            student.getFirstName().equals("John") &&
+	            student.getLastName().equals("Doe") &&
+	            student.getGroup() != null && student.getGroup().getGroupId() == 1));
 	}
+
 
 	@Test
 	public void testDeleteStudentById() {
@@ -96,34 +101,35 @@ public class ControllerTest {
 
 	@Test
 	public void testAddStudentToCourse() {
-		Scanner scanner = mock(Scanner.class);
-		List<Student> students = new ArrayList<>();
-		students.add(new Student(1, 1, "John", "Doe"));
-		List<Course> courses = new ArrayList<>();
-		courses.add(new Course(1, "Math", "Mathematics"));
-		when(studentService.getAllStudents()).thenReturn(students);
-		when(courseService.getAllCourses()).thenReturn(courses);
-		when(ScannerUtil.getIntInput(anyString())).thenReturn(1);
+	    Scanner scanner = mock(Scanner.class);
+	    List<Student> students = new ArrayList<>();
+	    students.add(new Student(1, new Group(1, "Group 1"), "John", "Doe"));
+	    List<Course> courses = new ArrayList<>();
+	    courses.add(new Course(1, "Math", "Mathematics"));
+	    when(studentService.getAllStudents()).thenReturn(students);
+	    when(courseService.getAllCourses()).thenReturn(courses);
+	    when(ScannerUtil.getIntInput(anyString())).thenReturn(1);
 
-		controller.addStudentToCourse(scanner);
+	    controller.addStudentToCourse(scanner);
 
-		verify(studentCourseService, times(1)).addStudentCourse(any());
+	    verify(studentCourseService, times(1)).addStudentCourse(any());
 	}
 
 	@Test
 	public void testRemoveStudentFromCourse() {
-		Scanner scanner = mock(Scanner.class);
-		List<Student> students = new ArrayList<>();
-		students.add(new Student(1, 1, "John", "Doe"));
-		List<StudentCourse> studentCourses = new ArrayList<>();
-		studentCourses.add(new StudentCourse(1, 1));
-		when(studentService.getAllStudents()).thenReturn(students);
-		when(studentCourseService.getStudentCoursesByStudentId(1)).thenReturn(studentCourses);
-		when(courseService.getCourseById(1)).thenReturn(new Course(1, "Math", "Mathematics"));
-		when(ScannerUtil.getIntInput(anyString())).thenReturn(1);
+	    Scanner scanner = mock(Scanner.class);
+	    List<Student> students = new ArrayList<>();
+	    students.add(new Student(1, new Group(1, "Group 1"), "John", "Doe"));
+	    List<StudentCourse> studentCourses = new ArrayList<>();
+	    studentCourses.add(new StudentCourse(1, 1));
+	    when(studentService.getAllStudents()).thenReturn(students);
+	    when(studentCourseService.getStudentCoursesByStudentId(1)).thenReturn(studentCourses);
+	    when(courseService.getCourseById(1)).thenReturn(new Course(1, "Math", "Mathematics"));
+	    when(ScannerUtil.getIntInput(anyString())).thenReturn(1);
 
-		controller.removeStudentFromCourse(scanner);
+	    controller.removeStudentFromCourse(scanner);
 
-		verify(studentCourseService, times(1)).deleteStudentCourse(1, 1);
+	    verify(studentCourseService, times(1)).deleteStudentCourse(1, 1);
 	}
+
 }

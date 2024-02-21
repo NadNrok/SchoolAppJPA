@@ -1,24 +1,46 @@
 package com.fm.school.service;
 
 import com.fm.school.model.Course;
+import com.fm.school.model.Student;
 import com.fm.school.model.StudentCourse;
+import com.fm.school.repository.CourseRepository;
+import com.fm.school.repository.StudentCourseRepository;
+import com.fm.school.repository.StudentRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface StudentCourseService {
-	List<StudentCourse> getAllStudentCourses();
+@Service
+public class StudentCourseService {
+    private final StudentCourseRepository studentCourseRepository;
 
-	List<StudentCourse> getStudentCoursesByStudentId(int studentId);
+    private final CourseRepository courseRepository;
 
-	List<StudentCourse> getStudentCoursesByCourseId(int courseId);
+    public StudentCourseService(StudentCourseRepository studentCourseRepository, CourseRepository courseRepository, StudentRepository studentRepository) {
+        this.studentCourseRepository = studentCourseRepository;
+        this.courseRepository = courseRepository;
+    }
 
-	void addStudentCourse(StudentCourse studentCourse);
+    public List<Student> findStudentsByCourseName(String courseName) {
+        Course course = courseRepository.findByCourseName(courseName);
+        List<Student> students = new ArrayList<>();
+        if (course != null) {
+            List<StudentCourse> studentCourses = studentCourseRepository.findByCourse(course);
+            for (StudentCourse studentCourse : studentCourses) {
+                students.add(studentCourse.getStudent());
+            }
+        }
+        return students;
+    }
 
-	void deleteStudentCourse(int studentId, int courseId);
+    public void saveStudentCourse(StudentCourse studentCourse) {
+        studentCourseRepository.save(studentCourse);
+    }
 
-	void addStudentToCourse(StudentCourse studentCourse);
-
-	boolean isStudentEnrolledInCourse(int studentId, int courseId);
-
-	List<Course> getStudentEnrolledCourses(int studentId);
+    @Transactional
+    public void deleteStudentCourse(StudentCourse studentCourse) {
+        studentCourseRepository.deleteStudentCourseById(studentCourse.getId());
+    }
 }

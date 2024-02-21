@@ -1,22 +1,32 @@
 package com.fm.school.service;
 
 import com.fm.school.model.Student;
+import com.fm.school.repository.StudentRepository;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
-public interface StudentService {
-	List<Student> getAllStudents();
+@Service
+public class StudentService {
+    private final StudentRepository studentRepository;
 
-	Student getStudentById(int studentId);
+    public StudentService(StudentRepository studentRepository) {
+        this.studentRepository = studentRepository;
+    }
 
-	void addStudent(Student student);
+    public void saveStudent(Student student) {
+        studentRepository.save(student);
+    }
 
-	void updateStudent(Student student);
+    public List<Student> getAllStudents() {
+        return studentRepository.findAll();
+    }
 
-	void deleteStudent(int studentId);
+    public Student getStudentById(int studentId) {
+        return studentRepository.findById(studentId).orElse(null);
+    }
 
-	List<Student> getStudentsByCourseName(String courseName);
-
-	void deleteStudentById(int studentId);
-	
+    public void deleteStudent(Student student) {
+        studentRepository.delete(student);
+    }
 }

@@ -1,7 +1,9 @@
 package com.fm.school.service;
 
-import com.fm.school.dao.GroupDAO;
+import com.fm.school.dao.GroupRepository;
 import com.fm.school.model.Group;
+import com.fm.school.service.impl.GroupServiceImpl;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -17,10 +19,10 @@ import static org.mockito.Mockito.*;
 public class GroupServiceImplTest {
 
 	@Mock
-	private GroupDAO groupDAO;
+	private GroupRepository groupDAO;
 
 	@InjectMocks
-	private GroupServiceImpl groupService;
+	private GroupService groupService;
 
 	@SuppressWarnings("deprecation")
 	@BeforeEach
