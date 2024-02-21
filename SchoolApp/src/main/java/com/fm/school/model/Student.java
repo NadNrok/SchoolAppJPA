@@ -47,6 +47,12 @@ public class Student {
 		this.lastName = lastName;
 	}
 
+	public Student(int studentId, String firstName, String lastName) {
+		this.studentId = studentId;
+		this.firstName = firstName;
+		this.lastName = lastName;
+	}
+
 	public Student(Group group, String firstName, String lastName) {
 		this.group = group;
 		this.firstName = firstName;
@@ -54,6 +60,46 @@ public class Student {
 	}
 
 	public Student() {
+	}
+
+	public int getStudentId() {
+		return studentId;
+	}
+
+	public void setStudentId(int studentId) {
+		this.studentId = studentId;
+	}
+
+	public Group getGroup() {
+		return group;
+	}
+
+	public void setGroup(Group group) {
+		this.group = group;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public List<StudentCourse> getCourses() {
+		return courses;
+	}
+
+	public void setCourses(List<StudentCourse> courses) {
+		this.courses = courses;
 	}
 
 	@Override
