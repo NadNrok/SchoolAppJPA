@@ -42,13 +42,12 @@ public class Course {
 		this.courseName = courseName;
 	}
 
+	public Course() {
+	}
+
 	@Override
 	public String toString() {
-		return "Course{" +
-				"courseId=" + courseId +
-				", courseName='" + courseName + '\'' +
-				", courseDescription='" + courseDescription + '\'' +
-				", students=" + students +
-				'}';
+		return "Course{" + "courseId=" + courseId + ", courseName='" + courseName + '\'' + ", courseDescription='"
+				+ courseDescription + '\'' + ", students=" + students + '}';
 	}
 }
