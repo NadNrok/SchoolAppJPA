@@ -104,7 +104,7 @@ public class Student {
 
 	@Override
 	public String toString() {
-		return "Student{" + "studentId=" + studentId + ", group=" + group + ", firstName='" + firstName + '\''
-				+ ", lastName='" + lastName + '\'' + ", courses=" + courses + '}';
+	    return "Student{" + "studentId=" + studentId + ", group=" + group.getGroupName() + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", courses=" + courses + '}';
 	}
+
 }

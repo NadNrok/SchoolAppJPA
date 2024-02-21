@@ -66,6 +66,7 @@ public class StudentCourse {
 
 	@Override
 	public String toString() {
-		return "StudentCourse{" + "id=" + id + ", student=" + student + ", course=" + course + '}';
+	    return "StudentCourse{" + "id=" + id + ", studentId=" + student.getStudentId() + ", courseId=" + course.getCourseId() + '}';
 	}
+
 }

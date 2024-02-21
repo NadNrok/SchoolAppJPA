@@ -66,6 +66,7 @@ public class Group {
 
 	@Override
 	public String toString() {
-		return "Group{" + "groupId=" + groupId + ", groupName='" + groupName + '\'' + ", students=" + students + '}';
+	    return "Group{" + "groupId=" + groupId + ", groupName='" + groupName + '\'' + ", students=" + students.size() + '}';
 	}
+
 }
